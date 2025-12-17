@@ -36,6 +36,11 @@ public class GameManage : MonoBehaviour
 
     public GameObject[] shell_all;
 
+    // ===== WinTrace Debug 控制（类成员变量，必须放在函数外）=====
+    private int _lastBlueAlive = -1;
+    private int _lastRedAlive = -1;
+    private int _traceEveryN = 500;   // 50 或 100 都行
+
     /// <summary>
     /// 存储个体的列表
     /// </summary>
@@ -61,7 +66,8 @@ public class GameManage : MonoBehaviour
         activeReds = IndividualsRed;
         envFunc.CalcEnemyDisStart(activeBlues, activeReds, config.TeamBlue, config.TeamRed);
         followTargetManager.CamerInit(config, IndividualsBlue, IndividualsRed);
-       
+
+        Debug.Log("GameManage Start: I am running.");
     }
 
     // Update is called once per frame
@@ -108,8 +114,21 @@ public class GameManage : MonoBehaviour
     /// </summary>  
     public void Whteher_win()
     {
+        int blueAlive = activeBlues.Count;   // 用你现在能编译的那个名字
+        int redAlive = activeReds.Count;    // 用你现在能编译的那个名字
+        int step = Academy.Instance.StepCount;
+
+        if (blueAlive != _lastBlueAlive || redAlive != _lastRedAlive || (step % _traceEveryN == 0))
+        {
+            Debug.Log($"[WIN TRACE] blueAlive={blueAlive}, redAlive={redAlive}, time={Time.time:F2}, step={step}");
+            _lastBlueAlive = blueAlive;
+            _lastRedAlive = redAlive;
+        }
+
         if (NumBlueAlive == 0 && NumRedAlive == 0)
         {
+            Debug.Log("[WIN TRACE] calling TeamsWin: Games over ..."); // 按你的分支写清楚
+
             //游戏结束
             Group_Agent_Red?.EndGroupEpisode();
             Group_Agent_Blue?.EndGroupEpisode();
@@ -120,7 +139,7 @@ public class GameManage : MonoBehaviour
         //红队胜利
         else if (NumBlueAlive == 0) 
         {
-            Debug.Log("【结算】红胜（蓝全灭）");
+            Debug.Log("[WIN TRACE] calling TeamsWin: NR win ..."); // 按你的分支写清楚
 
             Red_win++;
             envFunc.TeamsWin(activeReds, Group_Agent_Red, Group_Agent_Blue);
@@ -131,7 +150,7 @@ public class GameManage : MonoBehaviour
         //蓝队胜利
         else if (NumRedAlive == 0)
         {
-            Debug.Log("【结算】蓝胜（红全灭）");
+            Debug.Log("[WIN TRACE] calling TeamsWin: RL win ..."); // 按你的分支写清楚
 
             Blue_win++;
             envFunc.TeamsWin(activeBlues, Group_Agent_Blue, Group_Agent_Red);
@@ -143,26 +162,14 @@ public class GameManage : MonoBehaviour
         //超过最大步数,结束游戏
         if (m_ResetTimer >= MaxEnvironmentSteps)
         {
-            //Group_Agent_Red?.GroupEpisodeInterrupted();
-            //Group_Agent_Blue?.GroupEpisodeInterrupted();
-
-            ////存活个体设置为false
-            //ResetScene();
-            //envFunc.CalcEnemyDisStart(activeBlues, activeReds, config.TeamBlue, config.TeamRed);
-            Debug.Log("【结算】超时");
-
-            const float TIMEOUT_PENALTY = -1.0f;
-
-            // 只对存在的 RL group 加惩罚
-            Group_Agent_Blue?.AddGroupReward(TIMEOUT_PENALTY);
-            Group_Agent_Red?.AddGroupReward(TIMEOUT_PENALTY);
+            Debug.Log("[WIN TRACE] calling TeamsWin: over max steps ..."); // 按你的分支写清楚
 
             Group_Agent_Red?.GroupEpisodeInterrupted();
             Group_Agent_Blue?.GroupEpisodeInterrupted();
 
+            //存活个体设置为false
             ResetScene();
             envFunc.CalcEnemyDisStart(activeBlues, activeReds, config.TeamBlue, config.TeamRed);
-
         }
     }
 
@@ -188,62 +195,18 @@ public class GameManage : MonoBehaviour
         activeReds = IndividualsRed;
         NumBlueAlive = NumBlue;
         NumRedAlive = NumRed;
-
-        Debug.Log($"TeamRed.type={config.TeamRed.type}  TeamBlue.type={config.TeamBlue.type}");
-        Debug.Log($"Group_Agent_Red null? {Group_Agent_Red == null}, Group_Agent_Blue null? {Group_Agent_Blue == null}");
     }
-
-
-    public void TankDamage(GameObject go)
+    
+  
+    public void TankDamage(GameObject gameObject)
     {
-        // 1) 如果是 RL，先从 group 移除
-        if (go.TryGetComponent<Rl>(out var rl))
-        {
-            if (rl.tankTeam == TeamType.Blue) Group_Agent_Blue?.UnregisterAgent(rl);
-            else Group_Agent_Red?.UnregisterAgent(rl);
-        }
 
-        // 2) 物理清零（很重要）
-        if (go.TryGetComponent<Rigidbody>(out var rb))
-        {
-            rb.velocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-            rb.Sleep();
-        }
-
-        go.SetActive(false);
-
-        // 3) 活体列表更新
-        activeBlues.RemoveAll(ind => ind.TankgameObject == go);
-        activeReds.RemoveAll(ind => ind.TankgameObject == go);
+        gameObject.SetActive(false);
+        activeBlues = activeBlues.Where(ind => ind.TankgameObject != gameObject).ToList();
+        activeReds = activeReds.Where(ind => ind.TankgameObject != gameObject).ToList();
         NumBlueAlive = activeBlues.Count;
         NumRedAlive = activeReds.Count;
-
-        // 4) 让 NR / 其他逻辑方立刻换目标（避免追着失活目标）
-        ForceReTargetForAllNR();
     }
 
-    private void ForceReTargetForAllNR()
-    {
-        foreach (var r in activeReds)
-        {
-            var nr = r.TankgameObject.GetComponent<NR>();
-            if (nr != null && (nr.CurrentTarget == null || !nr.CurrentTarget.TankgameObject.activeInHierarchy))
-                nr.CurrentTarget = PickRandomAlive(activeBlues);
-        }
-        foreach (var b in activeBlues)
-        {
-            var nr = b.TankgameObject.GetComponent<NR>();
-            if (nr != null && (nr.CurrentTarget == null || !nr.CurrentTarget.TankgameObject.activeInHierarchy))
-                nr.CurrentTarget = PickRandomAlive(activeReds);
-        }
-    }
-
-    private Individual PickRandomAlive(List<Individual> list)
-    {
-        if (list == null || list.Count == 0) return null;
-        return list[UnityEngine.Random.Range(0, list.Count)];
-    }
-
-
+    
 }

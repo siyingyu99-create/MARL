@@ -1,7 +1,6 @@
 using Google.Protobuf.WellKnownTypes;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Net;
 using TMPro;
 using Unity.MLAgents;
@@ -125,41 +124,37 @@ public class Commo : MonoBehaviour
 
 
     /// <summary>
-    /// 定义发射子弹代码
-    /// fireObject: 发射者（坦克 GameObject）
-    /// ShellPos: 子弹发射位置
-    /// flags: 是否发射子弹
-    /// firespeed: 子弹速度
-    /// 发射成功返回 true，否则返回 false
+    /// 定义发射子弹代码，无需过多关注
+    /// ShellPos:子弹发射位置 flags:是否发射子弹 FireSpeed:发射子弹的速度
+    /// 发射成功返回true，否则返回false
     /// </summary>
     public bool Openfire(GameObject fireObject, Transform ShellPos, int flags, float firespeed)
     {
-        if (shell == null || flags != 1 || ShellPos == null) return false;
-
-        // Step1: 实例化子弹（用 ShellPos.rotation 更简洁）
-        GameObject shellObj = Instantiate(shell.gameObject, ShellPos.position, ShellPos.rotation);
-
-        // Step2: 先绑定发射者（更稳：即使 Rigidbody 结构变了也不丢 father）
-        if (shellObj.TryGetComponent<ShellControl>(out var shellControl))
+        //Step1:获取子弹的位置
+        if (shell != null && flags == 1)
         {
-            shellControl.Set_father(fireObject);
+            //Step2:实例化子弹
+            //Step3:给子弹添加力
+            GameObject shellObj = Instantiate(shell.gameObject, ShellPos.position, ShellPos.transform.rotation);
+            if (shellObj.TryGetComponent<Rigidbody>(out var shellRididbody))
+            {
+                shellRididbody.velocity = ShellPos.forward * firespeed;
+                //  shellObj.GetComponent<ShellControl>().Set_father(gameObject);
+                if (shellObj.TryGetComponent<ShellControl>(out var shellControl))
+                {
+                    shellControl.Set_father(fireObject);
+                }
+                else
+                {
+                    Debug.LogError("shellControl is null");
+                }
+                //设置坦克发射
+                // Debug.Log("发射子弹");
+                return true;
+             
+            }            
         }
-        else
-        {
-            UnityEngine.Debug.LogError("Shell prefab missing ShellControl component!");
-        }
-
-        // Step3: 再设置子弹速度
-        if (shellObj.TryGetComponent<Rigidbody>(out var shellRigidbody))
-        {
-            shellRigidbody.velocity = ShellPos.forward * firespeed;
-            return true;
-        }
-        else
-        {
-            UnityEngine.Debug.LogError("Shell prefab missing Rigidbody component!");
-            return false;
-        }
+        return false;
     }
 
     /// <summary>

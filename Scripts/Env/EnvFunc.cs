@@ -1,4 +1,4 @@
-ï»¿using Google.Protobuf.WellKnownTypes;
+using Google.Protobuf.WellKnownTypes;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net;
 using TMPro;
 using Unity.MLAgents;
+using Unity.MLAgents.Policies;
 using Unity.MLAgents.Sensors;
 using Unity.VisualScripting;
 using Unity.VisualScripting.FullSerializer;
@@ -19,9 +20,8 @@ using static GameManage;
 
 using Debug = UnityEngine.Debug;
 
-
 /// <summary>
-/// ç»´æŠ¤åŒæ–¹ã€åœ°å›¾åˆå§‹åŒ–ä»¥åŠæ‰€æœ‰é‡ç½®çš„ä»£ç ï¼Œç»´æŠ¤ä¸ªä½“å’Œç¾¤ä½“åˆ—è¡¨æ›´æ–°
+/// Î¬»¤Ë«·½¡¢µØÍ¼³õÊ¼»¯ÒÔ¼°ËùÓĞÖØÖÃµÄ´úÂë£¬Î¬»¤¸öÌåºÍÈºÌåÁĞ±í¸üĞÂ
 /// </summary>
 public class MapInfo
 {
@@ -38,15 +38,15 @@ public class MapInfo
 public class EnvFunc : MonoBehaviour
 {
   
-    [Header("ä¸ªä½“é¢„åˆ¶ä½“")]
+    [Header("¸öÌåÔ¤ÖÆÌå")]
     public Rl RlPrefab;
     public NR NrPrefab;
 
-    [Header("åœ°å›¾å±æ€§ä¿¡æ¯")]
+    [Header("µØÍ¼ÊôĞÔĞÅÏ¢")]
     public GameObject map;
     public MapInfo mapinfo;
     public LayerMask obstacleMask1;
-    public LayerMask obstacleMask2;//è®¾å®šéšœç¢ç‰©çš„LayerMask
+    public LayerMask obstacleMask2;//Éè¶¨ÕÏ°­ÎïµÄLayerMask
     private int layerMask;
     private int[] blueEnemyVisible;
     private int[] redEnemyVisible;
@@ -71,7 +71,7 @@ public class EnvFunc : MonoBehaviour
     }
 
     /// <summary>
-    /// åˆå§‹åŒ–åœ°å›¾æ•°æ®ï¼Œåˆå§‹åŒ–éƒ¨åˆ†æ— éœ€è¿‡å¤šå…³æ³¨
+    /// ³õÊ¼»¯µØÍ¼Êı¾İ£¬³õÊ¼»¯²¿·ÖÎŞĞè¹ı¶à¹Ø×¢
     /// </summary>
     public void InitMapData()
     {
@@ -100,7 +100,7 @@ public class EnvFunc : MonoBehaviour
     }
 
     /// <summary>
-    /// ç»™å®šé˜Ÿä¼ä¿¡æ¯ï¼Œä»¥åŠå‡ºç”Ÿä¸ªä½“ç±»å‹ï¼Œè¿”å›å…·ä½“çš„ä½ç½®
+    /// ¸ø¶¨¶ÓÎéĞÅÏ¢£¬ÒÔ¼°³öÉú¸öÌåÀàĞÍ£¬·µ»Ø¾ßÌåµÄÎ»ÖÃ
     /// </summary>  
     public (Vector3, Quaternion) SetPosition(PosType posType, MapInfo currentMap, TeamType TankTeam, int TankNum, int TeamCount)
     {
@@ -129,7 +129,7 @@ public class EnvFunc : MonoBehaviour
                     for (int i = randomPosBlue.Count - 1; i > 0; i--)
                     {
                         int randomIndex = Random.Range(0, i + 1);
-                        // äº¤æ¢ä½ç½®
+                        // ½»»»Î»ÖÃ
                         int temp = randomPosBlue[i];
                         randomPosBlue[i] = randomPosBlue[randomIndex];
                         randomPosBlue[randomIndex] = temp;
@@ -141,7 +141,7 @@ public class EnvFunc : MonoBehaviour
                     for (int i = randomPosRed.Count - 1; i > 0; i--)
                     {
                         int randomIndex = Random.Range(0, i + 1);
-                        // äº¤æ¢ä½ç½®
+                        // ½»»»Î»ÖÃ
                         int temp = randomPosRed[i];
                         randomPosRed[i] = randomPosRed[randomIndex];
                         randomPosRed[randomIndex] = temp;
@@ -196,7 +196,7 @@ public class EnvFunc : MonoBehaviour
     }
 
     /// <summary>
-    /// ç”ŸæˆRLé˜Ÿä¼
+    /// Éú³ÉRL¶ÓÎé
     /// </summary>
     public void CreateAgentTeams(GameManage gameManage, TeamInfo teaminfo, TeamInfo ememyinfo, SimpleMultiAgentGroup simpleMultiAgentGroup, out List<Individual> individuals)
     {
@@ -217,11 +217,11 @@ public class EnvFunc : MonoBehaviour
 
 
     /// <summary>
-    /// ç”Ÿæˆä¸ªä½“
+    /// Éú³É¸öÌå
     /// </summary>
     public Individual CreateIndividual(GameManage gameManage, IndividualType individualType, TeamInfo teaminfo, int index, GameObject prefab,  int enemycount, SimpleMultiAgentGroup simpleMultiAgentGroup)
     {
-        //TODOï¼šteamtypeå’Œ teaminfoé‡Œè¾¹çš„ä¿¡æ¯å¤šä½™äº†ï¼Œå¯ä»¥åˆ æ‰
+        //TODO£ºteamtypeºÍ teaminfoÀï±ßµÄĞÅÏ¢¶àÓàÁË£¬¿ÉÒÔÉ¾µô
         
         (Vector3 pos, Quaternion rot) = SetPosition(teaminfo.posType, mapinfo, teaminfo.team, index, teaminfo.num);
         GameObject tank = Instantiate(prefab, pos, rot);
@@ -272,7 +272,7 @@ public class EnvFunc : MonoBehaviour
 
 
     /// <summary>
-    /// é‡ç½®é˜Ÿä¼ä¸ªä½“
+    /// ÖØÖÃ¶ÓÎé¸öÌå
     /// </summary>
     public void ResetAgentTeams(List<Individual> individuals, TeamType teamType, int teamCount, PosType postype, IndividualType individualType, SimpleMultiAgentGroup simpleMultiAgentGroup)
     {       
@@ -288,36 +288,23 @@ public class EnvFunc : MonoBehaviour
     }
 
     /// <summary>
-    /// é‡ç½® RL ä¸ªä½“ï¼ˆå¸ˆå…„ä½¿ç”¨çš„æ˜¯éœ€è¦ç½®falseå†é‡ç½®ï¼‰
+    /// ÖØÖÃ RL ¸öÌå£¨Ê¦ĞÖÊ¹ÓÃµÄÊÇĞèÒªÖÃfalseÔÙÖØÖÃ£©
     /// </summary>
-    public void ResetRlIndividual(Individual individual, TeamType teamType, int teamCount,
-                                  PosType postype, SimpleMultiAgentGroup group)
+    public void ResetRlIndividual(Individual individual, TeamType teamType, int teamCount, PosType postype, SimpleMultiAgentGroup simpleMultiAgentGroup)
     {
-        var rl = individual.TankgameObject.GetComponent<Rl>();
-
-        // å…ˆæ¿€æ´»å†æ³¨å†Œæ›´ç¨³
         individual.TankgameObject.SetActive(true);
+        Rl RlTank = individual.TankgameObject.GetComponent<Rl>();
+        simpleMultiAgentGroup.RegisterAgent(RlTank);
+        (Vector3 pos, Quaternion rot) = SetPosition(postype, mapinfo, teamType, RlTank.tankAttributes.TankNum, teamCount);
+        RlTank.transform.SetPositionAndRotation(pos, rot);
+        RlTank.tankAttributes.PH = RlTank.tankAttributes.PHFULL;
+        RlTank.phSlider.value = RlTank.tankAttributes.PH;
+        RlTank.tankAttributes.firetime = 0;
+        //simpleMultiAgentGroup.RegisterAgent(RlTank);
 
-        // åªä¿ç•™ä¸€æ¬¡æ³¨å†Œ
-        if (group != null)
-        {
-            group.UnregisterAgent(rl);
-            group.RegisterAgent(rl);
-        }
-
-        // ä½ç½®ä¸çŠ¶æ€å¤ä½
-        (Vector3 pos, Quaternion rot) = SetPosition(postype, mapinfo, teamType, rl.tankAttributes.TankNum, teamCount);
-        rl.transform.SetPositionAndRotation(pos, rot);
-
-        rl.tankAttributes.PH = rl.tankAttributes.PHFULL;
-        rl.phSlider.value = rl.tankAttributes.PH;
-        rl.tankAttributes.firetime = 0;
-
-        rl.TankInitialize();   // â­å»ºè®®æŠŠ Enemies é¢„å¡«å……ç­‰åˆå§‹åŒ–æ”¾è¿™é‡Œï¼Œä¿è¯æ¯å±€ä¸€è‡´
     }
-
     /// <summary>
-    /// é‡ç½® NR ä¸ªä½“
+    /// ÖØÖÃ NR ¸öÌå
     /// </summary>
     public void ResetNRIndividual(Individual individual, TeamType teamType, int teamCount, PosType postype)
     {
@@ -331,24 +318,24 @@ public class EnvFunc : MonoBehaviour
     }
 
     /// <summary>
-    /// æ›´æ”¹å¦å…‹é¢œè‰²
+    /// ¸ü¸ÄÌ¹¿ËÑÕÉ«
     /// </summary>
     public void ChangeTankColor(GameObject tank, Material material, Color color)
     {
-        // ä½¿ç”¨Transform.Findæ‰¾åˆ°TankRenderers/TankFree_Body
+        // Ê¹ÓÃTransform.FindÕÒµ½TankRenderers/TankFree_Body
         Transform TankRenderTransform = tank.transform.Find("TankRenderers");
         Transform text = tank.transform.Find("Text");
         text.GetComponent<TextMeshPro>().color = color;
-        // ä»TankFree_Bodyè·å–MeshRenderer
+        // ´ÓTankFree_Body»ñÈ¡MeshRenderer
         foreach (var renderer in TankRenderTransform.GetComponentsInChildren<MeshRenderer>())
         {
-            // è®¾ç½®æ–°çš„æè´¨
+            // ÉèÖÃĞÂµÄ²ÄÖÊ
             renderer.material = material;
         }
     }
 
     /// <summary>
-    /// æ¯å¸§æ›´æ–°ä¸€æ¬¡å¯¹æ‰‹çš„ä½ç½®ä¿¡æ¯
+    /// Ã¿Ö¡¸üĞÂÒ»´Î¶ÔÊÖµÄÎ»ÖÃĞÅÏ¢
     /// </summary>    
     public void CalcEnemyDis(List<Individual> individualsActiveBlue, List<Individual> individualsActiveRed, TeamInfo blueInfo, TeamInfo redInfo)
     {
@@ -397,7 +384,7 @@ public class EnvFunc : MonoBehaviour
     
 
     /// <summary>
-    /// (NR)æ›´æ–°ä¸ªä½“çš„å¯¹æ‰‹åˆ—è¡¨
+    /// (NR)¸üĞÂ¸öÌåµÄ¶ÔÊÖÁĞ±í
     /// </summary>
     private void NRUpdateEnemies(Individual individual, List<Individual> opponents)
     {
@@ -413,7 +400,7 @@ public class EnvFunc : MonoBehaviour
     }
 
     /// <summary>
-    /// è“æ–¹(RL)åˆ¤æ–­æ•Œæ–¹æ˜¯å¦å¯è§ï¼Œå­˜å…¥æ•°ç»„
+    /// À¶·½(RL)ÅĞ¶ÏµĞ·½ÊÇ·ñ¿É¼û£¬´æÈëÊı×é
     /// </summary>
     private void VisibleEnemies(List<Individual> individualsActiveBlue, List<Individual> individualsActiveRed, TeamInfo blueInfo, TeamInfo redInfo)
     {
@@ -426,7 +413,7 @@ public class EnvFunc : MonoBehaviour
                 {
                     if (!Physics.Linecast(blue.gameObject.transform.position, red.gameObject.transform.position, layerMask))
                     {
-                        //çœ‹å¾—è§æ•Œæ–¹ç›®æ ‡ç½®1
+                        //¿´µÃ¼ûµĞ·½Ä¿±êÖÃ1
                         if (redInfo.type == IndividualType.NR)
                             blueEnemyVisible[red.TankgameObject.GetComponent<NR>().tankAttributes.TankNum - 1] = 1;
                         else
@@ -449,7 +436,7 @@ public class EnvFunc : MonoBehaviour
                 {
                     if (!Physics.Linecast(red.gameObject.transform.position, blue.gameObject.transform.position, layerMask))
                     {
-                        //çœ‹å¾—è§æ•Œæ–¹ç›®æ ‡ç½®1
+                        //¿´µÃ¼ûµĞ·½Ä¿±êÖÃ1
                         if(blueInfo.type == IndividualType.NR)
                             redEnemyVisible[blue.TankgameObject.GetComponent<NR>().tankAttributes.TankNum - 1] = 1;
                         else
@@ -460,83 +447,46 @@ public class EnvFunc : MonoBehaviour
         }
     }
 
-    ///// <summary>
-    ///// (RL)æ›´æ–°ä¸ªä½“çš„å¯¹æ‰‹åˆ—è¡¨
-    ///// </summary>
-    //private void RlUpdateEnemies(Individual individual, List<Individual> opponents, TeamInfo oppInfo)
-    //{
-    //    //var individual = individualWithPos.Ind;
-    //    var enemiesList = individual.TankgameObject.GetComponent<Rl>().Enemies;
-    //    for (int i = 0; i < blueEnemyVisible.Length; i++)
-    //    {
-    //        if (blueEnemyVisible[i] == 0)
-    //            enemiesList[i] = new EnemyInfo(0, null);
-    //    }
-
-    //    if(oppInfo.type == IndividualType.NR)
-    //    {
-    //        foreach (var opponent in opponents)
-    //        {
-    //            if (blueEnemyVisible[opponent.TankgameObject.GetComponent<NR>().tankAttributes.TankNum - 1] == 1)
-    //            {
-    //                float dis = Vector3.Distance(individual.gameObject.transform.position, opponent.gameObject.transform.position);
-    //                enemiesList[opponent.TankgameObject.GetComponent<NR>().tankAttributes.TankNum - 1] = new EnemyInfo(dis, opponent);
-    //            }
-    //        }
-    //    }
-    //    else
-    //    {
-    //        foreach (var opponent in opponents)
-    //        {
-    //            if (blueEnemyVisible[opponent.TankgameObject.GetComponent<Rl>().tankAttributes.TankNum - 1] == 1)
-    //            {
-    //                float dis = Vector3.Distance(individual.gameObject.transform.position, opponent.gameObject.transform.position);
-    //                enemiesList[opponent.TankgameObject.GetComponent<Rl>().tankAttributes.TankNum - 1] = new EnemyInfo(dis, opponent);
-    //            }
-    //        }
-
-    //    }
-    //}
+    /// <summary>
+    /// (RL)¸üĞÂ¸öÌåµÄ¶ÔÊÖÁĞ±í
+    /// </summary>
     private void RlUpdateEnemies(Individual individual, List<Individual> opponents, TeamInfo oppInfo)
     {
-        var rl = individual.TankgameObject.GetComponent<Rl>();
-        var enemiesList = rl.Enemies;
-
-        // ä½¿ç”¨ opponents.Count ä½œä¸ºçœŸæ­£æ•Œäººæ•°æ›´ç¨³
-        int n = opponents.Count;
-        while (enemiesList.Count < n)
-            enemiesList.Add(new EnemyInfo(0f, null));
-
-        // é€‰å¯¹å¯è§æ•°ç»„ï¼šè“æ–¹çœ‹çº¢æ–¹ -> blueEnemyVisibleï¼›çº¢æ–¹çœ‹è“æ–¹ -> redEnemyVisible
-        int[] visible = (rl.tankTeam == TeamType.Blue) ? blueEnemyVisible : redEnemyVisible;
-
-        // å…ˆæ¸…ç©ºä¸å¯è§
-        for (int i = 0; i < n; i++)
+        //var individual = individualWithPos.Ind;
+        var enemiesList = individual.TankgameObject.GetComponent<Rl>().Enemies;
+        for (int i = 0; i < blueEnemyVisible.Length; i++)
         {
-            if (visible == null || i >= visible.Length || visible[i] == 0)
-                enemiesList[i] = new EnemyInfo(0f, null);
+            if (blueEnemyVisible[i] == 0)
+                enemiesList[i] = new EnemyInfo(0, null);
         }
 
-        // å†å¡«å…¥å¯è§ç›®æ ‡
-        foreach (var opponent in opponents)
+        if(oppInfo.type == IndividualType.NR)
         {
-            int idx = -1;
-            if (oppInfo.type == IndividualType.NR)
-                idx = opponent.TankgameObject.GetComponent<NR>().tankAttributes.TankNum - 1;
-            else
-                idx = opponent.TankgameObject.GetComponent<Rl>().tankAttributes.TankNum - 1;
+            foreach (var opponent in opponents)
+            {
+                if (blueEnemyVisible[opponent.TankgameObject.GetComponent<NR>().tankAttributes.TankNum - 1] == 1)
+                {
+                    float dis = Vector3.Distance(individual.gameObject.transform.position, opponent.gameObject.transform.position);
+                    enemiesList[opponent.TankgameObject.GetComponent<NR>().tankAttributes.TankNum - 1] = new EnemyInfo(dis, opponent);
+                }
+            }
+        }
+        else
+        {
+            foreach (var opponent in opponents)
+            {
+                if (blueEnemyVisible[opponent.TankgameObject.GetComponent<Rl>().tankAttributes.TankNum - 1] == 1)
+                {
+                    float dis = Vector3.Distance(individual.gameObject.transform.position, opponent.gameObject.transform.position);
+                    enemiesList[opponent.TankgameObject.GetComponent<Rl>().tankAttributes.TankNum - 1] = new EnemyInfo(dis, opponent);
+                }
+            }
 
-            if (idx < 0 || idx >= n) continue;
-            if (visible == null || idx >= visible.Length || visible[idx] == 0) continue;
-
-            float dis = Vector3.Distance(individual.transform.position, opponent.transform.position);
-            enemiesList[idx] = new EnemyInfo(dis, opponent);
         }
     }
 
-
     /// <summary>
-    /// åˆå§‹(RL)æ›´æ–°ä¸ªä½“çš„å¯¹æ‰‹åˆ—è¡¨
+    /// ³õÊ¼(RL)¸üĞÂ¸öÌåµÄ¶ÔÊÖÁĞ±í
     /// </summary>
     private void UpdateEnemiesStart(Individual individual, List<Individual> opponents)
     {
@@ -554,7 +504,7 @@ public class EnvFunc : MonoBehaviour
 
 
     /// <summary>
-    /// Debug å¯¹æ‰‹åˆ—è¡¨, ç”¨äºæ£€æŸ¥å¯¹æ‰‹åˆ—è¡¨æ˜¯å¦æ­£ç¡®
+    /// Debug ¶ÔÊÖÁĞ±í, ÓÃÓÚ¼ì²é¶ÔÊÖÁĞ±íÊÇ·ñÕıÈ·
     /// </summary>
     private void PrintOpponentList(List<Individual> individuals, string teamName)
     {
@@ -587,136 +537,64 @@ public class EnvFunc : MonoBehaviour
         }
     }
 
-    ///// <summary>
-    ///// é˜Ÿä¼è·èƒœæ—¶æ·»åŠ å¥–åŠ±
-    //public void TeamsWin(List<Individual> winIndividualActive, SimpleMultiAgentGroup winAgentGroup, SimpleMultiAgentGroup loseAgentGroup)
-    //{
-
-    //    if (winAgentGroup != null)
-    //    {
-    //        winAgentGroup.AddGroupReward(1f);
-    //        foreach (var individual in winIndividualActive)
-    //        {
-    //            // ç»“æŸä¸ªä½“æ·»åŠ å¥–åŠ±
-    //            if (individual.TankgameObject.tag == "Tank_Blue")
-    //                individual.TankgameObject.GetComponent<Rl>().transform.SetPositionAndRotation(new Vector3(1000, 2000, -600), Quaternion.Euler(0, 0, 0));
-    //            else
-    //                individual.TankgameObject.GetComponent<Rl>().transform.SetPositionAndRotation(new Vector3(-600, 2000, 1000), Quaternion.Euler(0, 0, 0));
-
-    //            individual.TankgameObject.GetComponent<Rl>().AddReward(25f);
-    //        }
-
-    //        winAgentGroup.EndGroupEpisode();
-    //        loseAgentGroup?.EndGroupEpisode();
-
-    //        //   Debug.Log("Rl Group win and AddReward");
-    //    }
-    //    // è·èƒœé˜Ÿä¼æ˜¯NR
-    //    else
-    //    {
-    //        //å¦‚æœæ˜¯NR è®¾ç½®ä¸ºfalse,å…¶ä»–æ“ä½œå¾…å®šã€‚
-
-    //        loseAgentGroup?.EndGroupEpisode();
-    //    }
-
-    //}
-
     /// <summary>
-    /// é˜Ÿä¼è·èƒœæ—¶æ·»åŠ å¥–åŠ±ï¼ˆå¼ºåŒ–èƒœè´Ÿä¿¡å·ï¼‰
-    /// win: +3, lose: -3
-    /// </summary>
-    public void TeamsWin(
-        List<Individual> winIndividualActive,
-        SimpleMultiAgentGroup winAgentGroup,
-        SimpleMultiAgentGroup loseAgentGroup)
+    /// ¶ÓÎé»ñÊ¤Ê±Ìí¼Ó½±Àø
+    public void TeamsWin(List<Individual> winIndividualActive, SimpleMultiAgentGroup winAgentGroup, SimpleMultiAgentGroup loseAgentGroup)
     {
-        const float WIN_GROUP_REWARD = 3.0f;
-        const float LOSE_GROUP_PENALTY = -3.0f;
+        // Ñ¡Ò»¸öÊ¤·½´ú±íÓÃÓÚ Debug£¨±ÜÃâ ind Î´¶¨Òå£©
+        Individual ind = null;
+        if (winIndividualActive != null && winIndividualActive.Count > 0)
+            ind = winIndividualActive[0];
 
-        // 1) å¦‚æœè·èƒœæ–¹æ˜¯ RLï¼ˆæœ‰ groupï¼‰
+        BehaviorParameters bp = null;
+        if (ind != null && ind.TankgameObject != null)
+            bp = ind.TankgameObject.GetComponent<BehaviorParameters>();
+
         if (winAgentGroup != null)
         {
-            winAgentGroup.AddGroupReward(WIN_GROUP_REWARD);
+            winAgentGroup.AddGroupReward(1f);
 
-            // è¾“æ–¹å¦‚æœä¹Ÿæ˜¯ RLï¼Œå°±ç»™è´Ÿå¥–åŠ±
-            if (loseAgentGroup != null)
-                loseAgentGroup.AddGroupReward(LOSE_GROUP_PENALTY);
+            foreach (var individual in winIndividualActive)
+            {
+                // ½áÊø¸öÌåÌí¼Ó½±Àø + À­×ßÎ»ÖÃ
+                if (individual.TankgameObject.tag == "Tank_Blue")
+                    individual.TankgameObject.GetComponent<Rl>().transform.SetPositionAndRotation(
+                        new Vector3(1000, 2000, -600), Quaternion.Euler(0, 0, 0));
+                else
+                    individual.TankgameObject.GetComponent<Rl>().transform.SetPositionAndRotation(
+                        new Vector3(-600, 2000, 1000), Quaternion.Euler(0, 0, 0));
 
-            // â—ä¸è¦å†ç»™æ¯ä¸ªä¸ªä½“ +25 è¿™ç§å¼ºä¸ªäººå¥–åŠ±ï¼ˆä¼šæŠŠå­¦ä¹ æ–¹å‘å¸¦åï¼‰
-            // å¦‚ç¡®å®æƒ³ä¿ç•™ä¸€ç‚¹â€œè·èƒœå¼€å¿ƒâ€ï¼Œæœ€å¤šç»™å¾ˆå°çš„ +0.1~0.5
-            // foreach (var individual in winIndividualActive)
-            // {
-            //     var rl = individual.TankgameObject.GetComponent<Rl>();
-            //     if (rl != null) rl.AddReward(0.2f);
-            // }
-
-            Debug.Log($"AddGroupReward WIN {WIN_GROUP_REWARD}");
-            Debug.Log($"AddGroupReward LOSE {LOSE_GROUP_PENALTY}");
+                individual.TankgameObject.GetComponent<Rl>().AddReward(25f);
+            }
 
             winAgentGroup.EndGroupEpisode();
             loseAgentGroup?.EndGroupEpisode();
+
+            //// Debug£ºÊ¤·½´ú±í¸öÌåµÄĞÅÏ¢£¨TeamId/BehaviorName£©
+            //if (ind != null && bp != null)
+            //    Debug.Log($"[WIN CHECK] winner obj={ind.TankgameObject.name}, team={bp.TeamId}, behavior={bp.BehaviorName}");
+            //else
+            //    Debug.Log("[WIN CHECK] winner info unavailable (winIndividualActive empty or missing BehaviorParameters)");
         }
-        // 2) è·èƒœæ–¹æ˜¯ NRï¼ˆwinAgentGroup == nullï¼‰ï¼Œè¯´æ˜ RL è¿™è¾¹è¾“äº†
         else
         {
-            if (loseAgentGroup != null)
-            {
-                loseAgentGroup.AddGroupReward(LOSE_GROUP_PENALTY);
-                loseAgentGroup.EndGroupEpisode();
-            }
+            //// NR Ó®£º´òÓ¡Ò»¸öÀ¶·½ RL µÄ team£¬ÓÃÀ´È·ÈÏÊä·½È·ÊµÊÇ team=0
+            //if (gameManage != null && gameManage.activeBlues != null && gameManage.activeBlues.Count > 0)
+            //{
+            //    var loserObj = gameManage.activeBlues[0].TankgameObject;
+            //    bp = loserObj.GetComponent<Unity.MLAgents.Policies.BehaviorParameters>();
+            //    if (bp != null)
+            //        Debug.Log($"[WIN CHECK] NR win. Example BLUE loser obj={loserObj.name}, team={bp.TeamId}, behavior={bp.BehaviorName}");
+            //}
 
-            Debug.Log($"AddGroupReward WIN {WIN_GROUP_REWARD}");
-            Debug.Log($"AddGroupReward LOSE {LOSE_GROUP_PENALTY}");
-
+            // Ê¤·½ÊÇ NR£¬Êä·½Èç¹ûÊÇ RL£¬¸øÒ»¸öĞ¡µÄ¸º·´À¡
+            if (loseAgentGroup != null) loseAgentGroup.AddGroupReward(-1f);
+            loseAgentGroup?.EndGroupEpisode();
         }
-
-        Debug.Log($"TeamsWin: winGroup={(winAgentGroup != null)} loseGroup={(loseAgentGroup != null)}");
-
     }
 
     /// <summary>
-    /// é˜Ÿä¼è·èƒœæ—¶æ·»åŠ å¥–åŠ±ï¼ˆæ¨èç¨³å®šç‰ˆï¼‰
-    /// - ä¸»è¦ä½¿ç”¨ GroupReward è¡¨è¾¾èƒœè´Ÿ
-    /// - ç»™å¤±è´¥æ–¹æ˜ç¡®æƒ©ç½šï¼ˆå°¤å…¶æ˜¯çº¢æ–¹æ˜¯è„šæœ¬ NR æ—¶ï¼Œè“æ–¹æ›´éœ€è¦â€œè¾“çš„æƒ©ç½šâ€ï¼‰
-    /// - ä¸åœ¨ EndGroupEpisode å‰ç¬ç§»ï¼Œé¿å…å¼•å…¥å™ªå£°
-    /// </summary>
-    //public void TeamsWin(
-    //    List<Individual> winIndividualActive,
-    //    SimpleMultiAgentGroup winAgentGroup,
-    //    SimpleMultiAgentGroup loseAgentGroup)
-    //{
-    //    // ä½ å¯ä»¥æŠŠè¿™ä¸¤ä¸ªæ•°å½“ä½œâ€œèƒœ/è´Ÿæƒé‡å¼€å…³â€
-    //    const float WIN_GROUP_REWARD = 5f;
-    //    const float LOSE_GROUP_PENALTY = -5f;
-
-    //    // æƒ…å†µ1ï¼šè·èƒœæ–¹æ˜¯ RLï¼ˆæœ‰ groupï¼‰
-    //    if (winAgentGroup != null)
-    //    {
-    //        winAgentGroup.AddGroupReward(WIN_GROUP_REWARD);
-
-    //        // å¦‚æœå¤±è´¥æ–¹ä¹Ÿæ˜¯ RLï¼ˆæ¯”å¦‚ä»¥ååšè‡ªåšå¼ˆï¼‰ï¼Œå°±ç»™å¤±è´¥æ–¹æƒ©ç½š
-    //        if (loseAgentGroup != null)
-    //            loseAgentGroup.AddGroupReward(LOSE_GROUP_PENALTY);
-
-    //        // ï¼ˆå¯é€‰ï¼‰å¦‚æœä½ ç‰¹åˆ«æƒ³ç»™èƒœæ–¹ä¸ªä½“ä¸€ç‚¹ç‚¹å¥–åŠ±ï¼Œå»ºè®®æå°å³å¯ï¼š
-    //        // foreach (var individual in winIndividualActive)
-    //        //     individual.TankgameObject.GetComponent<Rl>().AddReward(0.2f);
-
-    //        winAgentGroup.EndGroupEpisode();
-    //        loseAgentGroup?.EndGroupEpisode();
-    //        return;
-    //    }
-
-    //    // æƒ…å†µ2ï¼šè·èƒœæ–¹æ˜¯è„šæœ¬ NRï¼ˆwinAgentGroup == nullï¼‰
-    //    // æ­¤æ—¶ loseAgentGroup å¾ˆå¯èƒ½å°±æ˜¯è“æ–¹ RLï¼Œå¿…é¡»ç»™æ˜ç¡®çš„â€œè¾“çš„æƒ©ç½šâ€
-    //    if (loseAgentGroup != null)
-    //        loseAgentGroup.AddGroupReward(LOSE_GROUP_PENALTY);
-
-    //    loseAgentGroup?.EndGroupEpisode();
-    //}
-
-    /// <summary>
-    /// å­˜æ´»ä¸ªä½“è®¾ç½®ä¸ºfalseï¼Œæ–¹ä¾¿é‡ç½®
+    /// ´æ»î¸öÌåÉèÖÃÎªfalse£¬·½±ãÖØÖÃ
     /// 
     public void AgentFalse(List<Individual> activeBlues, List<Individual> activeReds)
     {
@@ -740,19 +618,19 @@ public class EnvFunc : MonoBehaviour
     }
 
     ///  <summary>
-    ///  ä¸¤æ–¹æ›´æ–°ä¸ªä½“ç›®æ ‡Target
+    ///  Á½·½¸üĞÂ¸öÌåÄ¿±êTarget
     ///  
     public void TargetFresh(List<Individual> IndividualActiveBlue, List<Individual> IndividualActiveRed, Config config)
     {
-        //æ›´æ–°Blueé˜Ÿä¼çš„ç›®æ ‡
+        //¸üĞÂBlue¶ÓÎéµÄÄ¿±ê
         SetTarget(config.TeamBlue.type, config.TeamRed.type, IndividualActiveBlue, IndividualActiveRed);
-        //æ›´æ–°Redé˜Ÿä¼çš„ç›®æ ‡
+        //¸üĞÂRed¶ÓÎéµÄÄ¿±ê
         SetTarget(config.TeamRed.type, config.TeamBlue.type, IndividualActiveRed, IndividualActiveBlue);
     }
 
 
     /// <summary>
-    /// è§„åˆ™æ–¹æ›´æ–°ç›®æ ‡
+    /// ¹æÔò·½¸üĞÂÄ¿±ê
     /// </summary>
     private void SetTarget(IndividualType individualfriend, IndividualType individualenemy, List<Individual> friendlies, List<Individual> enemies)
     {
@@ -764,7 +642,7 @@ public class EnvFunc : MonoBehaviour
         // Sort enemies based on their distance to the swarm center
         var sortedEnemies = enemies.OrderBy(enemy => Vector3.Distance(swarmCenter, enemy.transform.position)).ToList();
 
-        //ä¸ºè§„åˆ™æ–¹æ·»åŠ é®æŒ¡è§†é‡ RlIsVisible
+        //Îª¹æÔò·½Ìí¼ÓÕÚµ²ÊÓÒ° RlIsVisible
         RlIsVisible = new int[sortedEnemies.Count];
         foreach (var red in friendlies)
         {
@@ -773,7 +651,7 @@ public class EnvFunc : MonoBehaviour
             {
                 if (!Physics.Linecast(red.gameObject.transform.position, sortedEnemies[j].gameObject.transform.position, layerMask))
                 {
-                    //çœ‹å¾—è§æ•Œæ–¹ç›®æ ‡ç½®1
+                    //¿´µÃ¼ûµĞ·½Ä¿±êÖÃ1
                     RlIsVisible[j] = 1;
                 }
             }
@@ -786,7 +664,7 @@ public class EnvFunc : MonoBehaviour
             nr.CurrentTarget = null;
         }
 
-        //èœ‚ç¾¤ï¼ˆè§„åˆ™æ–¹ï¼‰
+        //·äÈº£¨¹æÔò·½£©
         int minDisEnemy = 0;
         for(int i = 0; i < RlIsVisible.Length; i++)
         {
@@ -831,7 +709,7 @@ public class EnvFunc : MonoBehaviour
     }
 
     /// <summary>
-    /// è§„åˆ™æ–¹è®¡ç®—èœ‚ç¾¤ä¸­å¿ƒ
+    /// ¹æÔò·½¼ÆËã·äÈºÖĞĞÄ
     /// </summary>
     private Vector3 CalculateSwarmCenter(List<Individual> friendlies)
     {
